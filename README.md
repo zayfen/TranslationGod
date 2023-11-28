@@ -1,4 +1,4 @@
-###  # Translation God
+# Translation God
 
 Super translation tool.
 TG(Translation God) supports translate json files in directory.

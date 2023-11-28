@@ -12,6 +12,7 @@ import pandas as pd
 
 from config import EXCEL_FILE_NAME, EXCEL_FILE_MAP_NAME
 from chatgpt_service import ChatGPTTranslator
+from options_parser import Options, parse_option
 
 
 # Context
@@ -35,11 +36,14 @@ def list_files_in_directory(directory):
     return collected_files
 
 
-def parse_json_object_in_javascript_file(javascript_file_path):
+def parse_json_object_in_javascript_file(
+        javascript_file_path,
+        filepath_map_json_dict):
     """
     parse json object in javascript/typescript file,
     and retrive all key-value pairs
     """
+
     with open(javascript_file_path, encoding="utf-8") as file:
         source_code = file.read()
         syntax_tree = esprima.parseModule(source_code)
@@ -52,7 +56,9 @@ def parse_json_object_in_javascript_file(javascript_file_path):
         )
 
         json_dict = parse_object_expression(object_expr)
-        FILEPATH_MAP_JSON_DICT[javascript_file_path] = json_dict
+        filepath_map_json_dict[javascript_file_path] = json_dict
+
+    return filepath_map_json_dict
 
 
 def parse_object_expression(object_expr):
@@ -77,12 +83,21 @@ def get_filename_from_filepath(filepath):
     return os.path.basename(filepath)
 
 
-def write_json_dict_to_excel(path_map_json_dict):
+def write_json_dict_to_excel(path_map_json_dict, output_filename=EXCEL_FILE_NAME):
     """
     write json dict to excel file
     """
-    excel_writer = pd.ExcelWriter(EXCEL_FILE_NAME, engine='xlsxwriter')
-    excel_map_writer = pd.ExcelWriter(EXCEL_FILE_MAP_NAME, engine='xlsxwriter')
+
+    excel_writer = pd.ExcelWriter(output_filename, engine='xlsxwriter')
+
+    extend = 'xlsx'
+    output_filename_without_extend = output_filename
+    if output_filename.endswith('.'+extend):
+        output_filename_without_extend = output_filename[0:(0 - len("."+extend))]
+
+    output_map_filename = ".".join([output_filename_without_extend, 'map', extend])
+
+    excel_map_writer = pd.ExcelWriter(output_map_filename, engine='xlsxwriter')
 
     for path, json_dict in path_map_json_dict.items():
         # take one sheet every path
@@ -203,19 +218,74 @@ def write_json_to_javascript_file(out_dir, filename, json_dict, pure_json=True):
 
 
 
+# Commands
+
+def translate_json_directory_or_file(opt: Options):
+    """
+    Translate json file or  files in directory
+    """
+    pass
+
+def translate_excel_file(opt: Options):
+    """
+    Translate excel file
+    """
+    pass
+
+def convert_json_directory_to_excel(opt: Options):
+    """
+    Convert json files in directory to .xlsx and .map.xlsx
+    """
+    filepath_map_json_dict = {}
+    filepath_list = list_files_in_directory(dir_path)
+    for filepath in filepath_list:
+        parse_json_object_in_javascript_file(filepath, filepath_map_json_dict)
+
+    write_json_dict_to_excel(filepath_map_json_dict, opt.output)
+
+    filepath_map_json_dict = None
+
+
+def convert_excel_to_json_files(opt: Options):
+    """
+    Convert .xlsx and .map.xlsx to json files
+    """
+    input_file_path = opt.input
+    extend = 'xlsx'
+    input_file_path_without_extend = input_file_path
+    if input_file_path.endswith('.'+extend):
+        input_file_path_without_extend = input_file_path[0:(0 - len("."+extend))]
+
+    input_map_file_path = ".".join([input_file_path_without_extend, 'map', extend])
+    write_excel_to_javascript_file(input_file_path, input_map_file_path, opt.output)
+
 
 def main():
-    pass
+    opt = parse_option()
+
+    if opt.file_type == 'json' and opt.output.endswith('.xlsx'):
+        convert_json_directory_to_excel(opt)
+    elif opt.file_type == 'json':
+        translate_json_directory_or_file(opt)
+    elif opt.file_type == 'excel' and opt.output.endswith('.xlsx'):
+        translate_excel_file(opt)
+    elif opt.file_type == 'excel':
+        convert_excel_to_json_files(opt)
+    else:
+        raise Exception("Please pass correct arguments! If you dont know how, please check 'tg -h' for help")
+
 
 
 if __name__ == "__main__":
+    main()
+
     # dir_path = "./test_data/zh-CN/"
-    dir_path = "/home/zhangyunfeng@pudu.com/codeup.aliyun.com/cloud-platform-front/src/locales/zh-CN"
+    # dir_path = "/home/zhangyunfeng@pudu.com/codeup.aliyun.com/cloud-platform-front/src/locales/zh-CN"
 
-    filepath_list = list_files_in_directory(dir_path)
+    # filepath_list = list_files_in_directory(dir_path)
 
-    for filepath in filepath_list:
-        parse_json_object_in_javascript_file(filepath)
+    # for filepath in filepath_list:
+        # parse_json_object_in_javascript_file(filepath)
 
     # items = FILEPATH_MAP_JSON_DICT.items()
     # for (filepath, json_dict) in items:
@@ -235,4 +305,4 @@ if __name__ == "__main__":
 
 
     # write_json_dict_to_excel(FILEPATH_MAP_JSON_DICT)
-    write_excel_to_javascript_file("./response_yunfeng2.xlsx", "./result.map.xlsx", "./output2/")
+    # write_excel_to_javascript_file("./response_yunfeng2.xlsx", "./result.map.xlsx", "./output2/")
