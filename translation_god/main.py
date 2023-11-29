@@ -22,6 +22,15 @@ TARGET_LOCALES = ['French', 'German', 'Thai', 'Italian', 'Spanish', 'Dutch', 'Tr
 
 
 
+def get_filename_from_filepath(filepath):
+    return os.path.basename(filepath)
+
+
+def get_abspath_from_relative(_path) -> str:
+    root = os.path.curdir
+    return os.path.abspath(os.path.join(root, filename))
+
+
 def list_files_in_directory(directory):
     """
     list all file in directory recursively
@@ -77,10 +86,6 @@ def parse_object_expression(object_expr):
         kv_collection[item_key] = item_value
 
     return kv_collection
-
-
-def get_filename_from_filepath(filepath):
-    return os.path.basename(filepath)
 
 
 def write_json_dict_to_excel(path_map_json_dict, output_filename=EXCEL_FILE_NAME):
