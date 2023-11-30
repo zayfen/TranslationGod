@@ -103,7 +103,9 @@ def parse_option() -> Options:
     if args.source_lang:
         opt.set_source_lang(args.source_lang)
     if args.target_langs:
-        opt.set_target_langs(args.target_langs)
+        # args.target_langs is like "English,French"
+        _target_langs = args.target_langs.split(",")
+        opt.set_target_langs(_target_langs)
     if args.input:
         opt.set_input(args.input)
     if args.output:

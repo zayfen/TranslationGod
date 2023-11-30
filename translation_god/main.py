@@ -16,7 +16,6 @@ from options_parser import Options, parse_option
 
 
 # Context
-FILEPATH_MAP_JSON_DICT = {}
 SOURCE_LOCALE = 'Chinese'
 TARGET_LOCALES = ['French', 'German', 'Thai', 'Italian', 'Spanish', 'Dutch', 'Traditional Chinese']
 
@@ -324,6 +323,9 @@ def convert_excel_to_json_files(opt: Options):
 
 def main():
     opt = parse_option()
+
+    SOURCE_LOCALE = opt.source_lang
+    TARGET_LOCALES = opt.target_langs
 
     if opt.file_type == 'json' and opt.output.endswith('.xlsx'):
         convert_json_directory_to_excel(opt)
