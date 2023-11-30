@@ -10,7 +10,6 @@ import abc
 from openai import OpenAI
 from answer_parser import parse_translate_answer
 
-# client = OpenAI(api_key="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")
 client = OpenAI(
     # api_key="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",
     api_key="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",
@@ -40,8 +39,8 @@ class Translator(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, __subclass: type) -> bool:
         return (
-            hasattr(__subclass, 'ask') and
-            callable(__subclass.ask) or NotImplemented)
+            hasattr(__subclass, 'translate') and
+            callable(__subclass.translate) or NotImplemented)
 
     @abc.abstractmethod
     def translate(self, content, to_languages, source_language="Chinese"):

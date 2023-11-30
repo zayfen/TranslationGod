@@ -26,9 +26,9 @@ def get_filename_from_filepath(filepath):
     return os.path.basename(filepath)
 
 
-def get_abspath_from_relative(_path) -> str:
-    root = os.path.curdir
-    return os.path.abspath(os.path.join(root, filename))
+def get_abspath_from_relative(_path, root=os.path.curdir) -> str:
+    root_dir = os.path.dirname(root)
+    return os.path.abspath(os.path.join(root_dir, _path))
 
 
 def list_files_in_directory(directory):
@@ -88,17 +88,24 @@ def parse_object_expression(object_expr):
     return kv_collection
 
 
-def write_json_dict_to_excel(path_map_json_dict, output_filename=EXCEL_FILE_NAME):
+def write_json_dict_to_excel(path_map_json_dict, output_filepath=EXCEL_FILE_NAME):
     """
     write json dict to excel file
     """
+    dir_path = os.path.dirname(output_filepath) or "."
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
-    excel_writer = pd.ExcelWriter(output_filename, engine='xlsxwriter')
+    # basename maybe "" xxx, yyy.xlsx
+    basename = os.path.basename(output_filepath)
+
+    output_filepath = os.path.join(dir_path, EXCEL_FILE_NAME if basename == '' else basename)
+    excel_writer = pd.ExcelWriter(output_filepath, engine='xlsxwriter')
 
     extend = 'xlsx'
-    output_filename_without_extend = output_filename
-    if output_filename.endswith('.'+extend):
-        output_filename_without_extend = output_filename[0:(0 - len("."+extend))]
+    output_filename_without_extend = output_filepath
+    if output_filepath.endswith('.'+extend):
+        output_filename_without_extend = output_filepath[0:(0 - len("."+extend))]
 
     output_map_filename = ".".join([output_filename_without_extend, 'map', extend])
 
@@ -145,7 +152,7 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
     """
     # excel_map_file_path必须存在，如果不存在此文件，则表示没有对应的json文件，直接忽略
     if not os.path.exists(excel_map_file_path):
-        return
+        raise Exception(f"{excel_map_file_path} don't exist!")
 
     try:
         excel_reader = pd.ExcelFile(excel_file_path)
@@ -177,7 +184,7 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
                 pure_json = sheet_name.endswith(".json")
 
                 write_json_kv_list_to_javascript_file(
-                    f"{output_dir}/{key}/",
+                    os.path.join(output_dir, key),
                     sheet_name,
                     json_keys,
                     series_dict.values(),
@@ -229,7 +236,42 @@ def translate_json_directory_or_file(opt: Options):
     """
     Translate json file or  files in directory
     """
-    pass
+
+    input_path = get_abspath_from_relative(opt.input)
+    input_path_existed = os.path.exists(input_path)
+    if not input_path_existed:
+        raise Exception(f"{input_path} don't exist!")
+
+    input_is_dir = os.path.isdir(input_path)
+    json_file_path_list = []
+    if input_is_dir:
+        file_path_list = list_files_in_directory(input_path)
+        json_file_path_list = list(filter(lambda file_path: file_path.endswith(".json") or file_path.endswith(".ts") or file_path.endswith(".js"), file_path_list))
+
+    else:
+        json_file_path_list.append(input_path)
+
+    filepath_map_json_dict = {}
+    for json_file_path in json_file_path_list:
+        parse_json_object_in_javascript_file(json_file_path, filepath_map_json_dict)
+
+    target_langs = opt.target_langs
+    output_path = opt.output
+    abs_output_path = get_abspath_from_relative(output_path)
+
+    items = filepath_map_json_dict.items()
+    t = ChatGPTTranslator()
+
+    for (filepath, json_dict) in items:
+        filename = get_filename_from_filepath(filepath)
+        purse_josn = filename.endswith('.json')
+
+        t.reset()
+        translated_result = t.translate_json_dict(json_dict, target_langs)
+
+        for (language, translated_json_dict) in translated_result.items():
+            write_json_to_javascript_file(f"{abs_output_path}/{language}/", filename, translated_json_dict, purse_josn)
+
 
 def translate_excel_file(opt: Options):
     """
@@ -241,12 +283,22 @@ def convert_json_directory_to_excel(opt: Options):
     """
     Convert json files in directory to .xlsx and .map.xlsx
     """
+
+    input_path = get_abspath_from_relative(opt.input)
+    input_path_existed = os.path.exists(input_path)
+    if not input_path_existed:
+        raise Exception(f"{input_path} don't exist!")
+
+    input_is_dir = os.path.isdir(input_path)
+
     filepath_map_json_dict = {}
-    filepath_list = list_files_in_directory(dir_path)
+    filepath_list = list_files_in_directory(input_path) if input_is_dir else [input_path]
+
     for filepath in filepath_list:
         parse_json_object_in_javascript_file(filepath, filepath_map_json_dict)
 
-    write_json_dict_to_excel(filepath_map_json_dict, opt.output)
+    output_path = get_abspath_from_relative(opt.output)
+    write_json_dict_to_excel(filepath_map_json_dict, output_path)
 
     filepath_map_json_dict = None
 
@@ -255,14 +307,19 @@ def convert_excel_to_json_files(opt: Options):
     """
     Convert .xlsx and .map.xlsx to json files
     """
-    input_file_path = opt.input
+    input_file_path = get_abspath_from_relative(opt.input)
+    input_path_existed = os.path.exists(input_file_path)
+    if not input_path_existed:
+        raise Exception(f"{input_file_path} don't exist!")
+
     extend = 'xlsx'
     input_file_path_without_extend = input_file_path
     if input_file_path.endswith('.'+extend):
         input_file_path_without_extend = input_file_path[0:(0 - len("."+extend))]
 
     input_map_file_path = ".".join([input_file_path_without_extend, 'map', extend])
-    write_excel_to_javascript_file(input_file_path, input_map_file_path, opt.output)
+    output_path = get_abspath_from_relative(opt.output)
+    write_excel_to_javascript_file(input_file_path, input_map_file_path, output_path)
 
 
 def main():
