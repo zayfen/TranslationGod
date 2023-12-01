@@ -1,48 +1,26 @@
 #coding: utf-8
 
 import json
+import re
+
+from pick_json import pick_json
+
+
 
 def parse_translate_answer(answer, to_languages):
    """
    parse gpt answer, pick json
    """""
+   # json_dict_list 和 to_languages 的元素一一对应
+   json_dict_list = pick_json(answer)
    result = {}
 
-   # 放置结尾没有换行符
-   answer = answer + '\n'
-   last_cursor = 0
+   for index in range(len(json_dict_list)):
+      json_dict = json_dict_list[index]
+      lang = to_languages[index]
+      result[lang] = list(json_dict.values())
 
-   for language in to_languages:
-       remaing_answer = answer
-       search_tag = f"{language}:\n"
-       index = remaing_answer.find(search_tag, 0)
-       if index == -1:
-          print(f"parse_translate_answer: can't find language {language}")
-          index = last_cursor
-           # raise Exception(f"parse_translate_answer: can't find language {language}")
-
-       remaing_answer = remaing_answer[index:]
-
-       # find json start char '{'
-       json_start_index = remaing_answer.find('{\n')
-
-       # find json end char '}'
-       json_end_index = remaing_answer.find('}\n')
-
-       # update json_end_index
-       last_cursor = json_end_index if json_end_index > -1 else last_cursor
-
-       json_str = remaing_answer[json_start_index:(json_end_index+1)]
-       print(f"{json_str= }")
-
-       try:
-          json_dict = json.loads(json_str)
-
-          # collect translations
-          result[language] = list(json_dict.values())
-       except Exception as err:
-         print(f"Fro {language} parse error: {json_start_index}, {json_end_index} \n {json_str}")
-
+   print(f"{result=}")
    return result
 
 

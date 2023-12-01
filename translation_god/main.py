@@ -17,8 +17,7 @@ from options_parser import Options, parse_option
 
 # Context
 SOURCE_LOCALE = 'Chinese'
-TARGET_LOCALES = ['French', 'German', 'Thai', 'Italian', 'Spanish', 'Dutch', 'Traditional Chinese']
-
+TARGET_LOCALES = []
 
 
 def get_filename_from_filepath(filepath):

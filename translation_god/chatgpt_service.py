@@ -11,28 +11,24 @@ from openai import OpenAI
 from answer_parser import parse_translate_answer
 
 client = OpenAI(
-    # api_key="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",
-    api_key="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",
+    api_key="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",
+    # api_key="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",
     # default max_retries is 2
     max_retries = 0
 )
 
 def build_translate_prompt(source_text_list, source_language, to_languages):
-
     content = "\n".join([f'- "{text}"' for text in source_text_list])
-
-
-    # Your task is to translate them to the following languages: English, Japanese, French, and generate a json output for each language following the next rules:\n- Keys will always be number starting from 0 and increasing sequentially\n- Values will be the translations
 
     return f"""
 From the following texts written in {source_language}:
 
 {content}
 
-For the following languages: {", ".join(to_languages)}, your task is to generate a json output for each language following the next rules:
+For the following languages: {", ".join(to_languages)}, your task is to generate a JSON output for each language following the next rules:
 - Keys will always be number starting from 0 and increasing sequentially
 - Values will be the translations
-- All texts must be translated"""
+"""
 
 
 class Translator(metaclass=abc.ABCMeta):
@@ -73,9 +69,7 @@ class ChatGPTTranslator(Translator):
         prompt = build_translate_prompt(text_list, source_language, to_languages)
         _messages.append({ "role": "user", "content": prompt })
 
-        print(f"""User:
-            {_messages}
-        """)
+        print(f"""User: {_messages} """)
 
         chat_completion = client.chat.completions.create(model=self.model,
         # temperature = 0.7,
@@ -93,8 +87,8 @@ class ChatGPTTranslator(Translator):
 
     def translate_json_dict(self, json_dict, to_languages, source_language="Chinese"):
         """
-        translate json dict, return a dict which contains language and all translated texts
-        """
+translate json dict, return a dict which contains language and all translated texts
+"""
         self.json_dict = json_dict
         _json_dict_keys = list(json_dict.keys())
         _json_dict_values = list(json_dict.values())
@@ -163,4 +157,4 @@ if __name__ == "__main__":
     print(f"""
 ChatGPT:
 {answer}
-    """)
+""")
