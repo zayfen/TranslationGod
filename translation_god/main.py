@@ -342,36 +342,3 @@ def main():
         convert_excel_to_json_files(opt)
     else:
         raise Exception("Please pass correct arguments! If you dont know how, please check 'tg -h' for help")
-
-
-
-if __name__ == "__main__":
-    main()
-
-    # dir_path = "./test_data/zh-CN/"
-    # dir_path = "/home/zhangyunfeng@pudu.com/codeup.aliyun.com/cloud-platform-front/src/locales/zh-CN"
-
-    # filepath_list = list_files_in_directory(dir_path)
-
-    # for filepath in filepath_list:
-        # parse_json_object_in_javascript_file(filepath)
-
-    # items = FILEPATH_MAP_JSON_DICT.items()
-    # for (filepath, json_dict) in items:
-    #     print("filepath: ", filepath)
-    #     filename = get_filename_from_filepath(filepath)
-
-    #     # due to pages.ts too large
-    #     if filepath.endswith("pages.ts"):
-    #         continue
-
-    #     t = ChatGPTTranslator()
-    #     t.reset()
-
-    #     translated_result = t.translate_json_dict(json_dict, TARGET_LOCALES)
-    #     for (language, translated_json_dict) in translated_result.items():
-    #         write_json_to_javascript_file(f"./output/{language}/", filename, translated_json_dict, False)
-
-
-    # write_json_dict_to_excel(FILEPATH_MAP_JSON_DICT)
-    # write_excel_to_javascript_file("./response_yunfeng2.xlsx", "./result.map.xlsx", "./output2/")
