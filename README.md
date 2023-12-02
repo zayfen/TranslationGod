@@ -7,6 +7,12 @@ TG supports translate excel file into multi language
 
 ## Usage
 
+设置`OPENAI_API_KEY`环境变量
+
+``` shell
+export OPENAI_API_KEY="sk-xxxxxxx"
+```
+
 ### Translate json files in directory
 ``` shell
 

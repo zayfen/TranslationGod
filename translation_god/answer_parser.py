@@ -20,7 +20,7 @@ def parse_translate_answer(answer, to_languages):
       lang = to_languages[index]
       result[lang] = list(json_dict.values())
 
-   print(f"{result=}")
+   print(f"Translation Result: \n {result}\n")
    return result
 
 

@@ -53,6 +53,10 @@ def parse_json_object_in_javascript_file(
 
     with open(javascript_file_path, encoding="utf-8") as file:
         source_code = file.read()
+        pure_json = javascript_file_path.endswith(".json")
+        if pure_json:
+            source_code = 'export default ' + source_code
+
         syntax_tree = esprima.parseModule(source_code)
         syntax_tree_dict = syntax_tree.toDict()
         object_expr_path = ('body', 0, 'declaration')
@@ -244,8 +248,8 @@ def translate_json_directory_or_file(opt: Options):
     json_file_path_list = []
     if input_is_dir:
         file_path_list = list_files_in_directory(input_path)
-        json_file_path_list = list(filter(lambda file_path: file_path.endswith(".json") or file_path.endswith(".ts") or file_path.endswith(".js"), file_path_list))
-
+        avaiable_file_extends = ['.json', '.ts', '.js']
+        json_file_path_list = list(filter(lambda _path: any([ _path.endswith(extend) for extend in avaiable_file_extends ]), file_path_list))
     else:
         json_file_path_list.append(input_path)
 
@@ -258,7 +262,7 @@ def translate_json_directory_or_file(opt: Options):
     abs_output_path = get_abspath_from_relative(output_path)
 
     items = filepath_map_json_dict.items()
-    t = ChatGPTTranslator()
+    t = ChatGPTTranslator(opt.model, opt.frequency)
 
     for (filepath, json_dict) in items:
         filename = get_filename_from_filepath(filepath)
@@ -275,7 +279,7 @@ def translate_excel_file(opt: Options):
     """
     Translate excel file
     """
-    pass
+    raise NotImplementedError("Don't support translating excel file yet!")
 
 def convert_json_directory_to_excel(opt: Options):
     """
@@ -285,7 +289,7 @@ def convert_json_directory_to_excel(opt: Options):
     input_path = get_abspath_from_relative(opt.input)
     input_path_existed = os.path.exists(input_path)
     if not input_path_existed:
-        raise Exception(f"{input_path} don't exist!")
+        raise Exception(f"{input_path} doesn't exist!")
 
     input_is_dir = os.path.isdir(input_path)
 
@@ -308,7 +312,7 @@ def convert_excel_to_json_files(opt: Options):
     input_file_path = get_abspath_from_relative(opt.input)
     input_path_existed = os.path.exists(input_file_path)
     if not input_path_existed:
-        raise Exception(f"{input_file_path} don't exist!")
+        raise Exception(f"{input_file_path} doesn't exist!")
 
     extend = 'xlsx'
     input_file_path_without_extend = input_file_path
@@ -316,6 +320,8 @@ def convert_excel_to_json_files(opt: Options):
         input_file_path_without_extend = input_file_path[0:(0 - len("."+extend))]
 
     input_map_file_path = ".".join([input_file_path_without_extend, 'map', extend])
+    if not os.path.exists(input_map_file_path):
+        raise Exception(f"{input_map_file_path} doesn't exist!")
     output_path = get_abspath_from_relative(opt.output)
     write_excel_to_javascript_file(input_file_path, input_map_file_path, output_path)
 

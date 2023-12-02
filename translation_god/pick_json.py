@@ -86,7 +86,6 @@ def pick_json(content):
                 json_end_index = cursor
 
                 json_str = content[json_start_index:json_end_index+1]
-                print(f"{json_str=}")
                 result.append(json.loads(json_str))
                 state = State.OUT
 

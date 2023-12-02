@@ -9,6 +9,8 @@ class Options:
         self._target_langs = []
         self._input = None
         self._output = None
+        self._model = 'gpt-3.5-turbo'
+        self._frequcency = 3
 
 
     def set_file_type(self, file_type):
@@ -23,12 +25,21 @@ class Options:
         self._target_langs = target_langs
 
 
+    def set_model(self, model):
+        self._model = model
+
+
     def set_input(self, input):
         self._input = input
 
 
     def set_output(self, output):
         self._output = output
+
+
+    def set_frequency(self, frequency):
+        self._frequcency =frequency
+
 
     @property
     def file_type(self):
@@ -49,6 +60,14 @@ class Options:
     @property
     def output(self):
         return self._output
+
+    @property
+    def model(self):
+        return self._model
+
+    @property
+    def frequency(self):
+        return self._frequcency
 
     def __str__(self) -> str:
         return str(self.__dict__)
@@ -95,21 +114,45 @@ def parse_option() -> Options:
         dest='output',
         help="Output directory or file")
 
-    args = parser.parse_args()
+    parser.add_argument(
+        "-m",
+        '--model',
+        dest='model',
+        help="Use which ChatGPT model"
+    )
 
+    parser.add_argument(
+        "-q",
+        "--frequency",
+        dest="frequency",
+        help="How many requests per minute")
+
+    args = parser.parse_args()
     opt = Options()
+
     if args.file_type:
         opt.set_file_type(args.file_type)
+
     if args.source_lang:
         opt.set_source_lang(args.source_lang)
+
     if args.target_langs:
         # args.target_langs is like "English,French"
         _target_langs = args.target_langs.split(",")
         opt.set_target_langs(_target_langs)
+
     if args.input:
         opt.set_input(args.input)
+
     if args.output:
         opt.set_output(args.output)
+
+    if args.model:
+        opt.set_model(args.model)
+
+    if args.frequency:
+        _frequency = int(args.frequency)
+        opt.set_frequency(_frequency)
 
     return opt
 

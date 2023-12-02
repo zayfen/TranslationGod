@@ -7,27 +7,27 @@ Provide a chatgpt translate feature
 
 import os
 import abc
+import time
 from openai import OpenAI
 from answer_parser import parse_translate_answer
 
 client = OpenAI(
-    api_key="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",
+    # api_key="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",
     # api_key="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",
-    # default max_retries is 2
-    max_retries = 0
 )
 
 def build_translate_prompt(source_text_list, source_language, to_languages):
     content = "\n".join([f'- "{text}"' for text in source_text_list])
 
     return f"""
-From the following texts written in {source_language}:
+I want you act as a translator. I will give you the following sentences in {source_language}:
 
 {content}
 
-For the following languages: {", ".join(to_languages)}, your task is to generate a JSON output for each language following the next rules:
+For the following languages: {", ".join(to_languages)}, your task is to generate JSON output for each language following the next rules:
 - Keys will always be number starting from 0 and increasing sequentially
-- Values will be the translations
+- Values will only be the translation sentence
+- Do not write explanations
 """
 
 
@@ -45,11 +45,16 @@ class Translator(metaclass=abc.ABCMeta):
 
 
 class ChatGPTTranslator(Translator):
-    def __init__(self):
+    def __init__(self, mode="gpt-3.5-turbo", frequcency=3):
+        """
+        @Param { model } - ChatGPT model
+        @Param { frequcency } - Requests per minute
+        """
         # max translate 100 text entries each time
-        self.MAX_ENTRIES = 400
+        self.MAX_ENTRIES = 100
+        self._frequcency = frequcency
 
-        self.model = "gpt-3.5-turbo-16k"
+        self.model = mode
         self.role = 'Your are a translation expert'
         self.answer = ''
 
@@ -61,7 +66,8 @@ class ChatGPTTranslator(Translator):
         self.output = {}
 
     def messages(self):
-        return [{ "role": "system", "content": self.role }]
+        # return [{ "role": "system", "content": self.role }]
+        return []
 
     def translate(self, text_list, to_languages, source_language="Chinese"):
         _messages = self.messages()
@@ -69,10 +75,10 @@ class ChatGPTTranslator(Translator):
         prompt = build_translate_prompt(text_list, source_language, to_languages)
         _messages.append({ "role": "user", "content": prompt })
 
-        print(f"""User: {_messages} """)
+        print(f"Translating from {source_language} to {to_languages}")
 
         chat_completion = client.chat.completions.create(model=self.model,
-        # temperature = 0.7,
+        temperature = 0.8,
         # max_tokens = 100,
         # top_p = 1,
         # frequency_penalty = 0,
@@ -82,6 +88,11 @@ class ChatGPTTranslator(Translator):
         answer_content = chat_completion.choices[0].message.content
         self.answer = answer_content
         print(f"\n\n{self.answer}\n\n")
+
+        # sleep for 60/self.frequency
+        sleep_seconds = 60 / self._frequcency
+        time.sleep(sleep_seconds)
+
         return self.answer
 
 
@@ -101,29 +112,31 @@ translate json dict, return a dict which contains language and all translated te
         # language map text list
         translated_text_list = {}
 
-        while start_index < (len(_json_dict_values) - 1):
+        while start_index < len(_json_dict_values):
             _json_dict_values_chunk = _json_dict_values[start_index:end_index]
 
             start_index = start_index + self.MAX_ENTRIES
             end_index = start_index + self.MAX_ENTRIES
 
-            _answer_chunk = self.translate(_json_dict_values_chunk, to_languages, source_language)
-            _result_chunk = parse_translate_answer(_answer_chunk, to_languages)
+            #FIXME: 单个语言翻译，准确率更高，多个语言一起翻译不太稳定.
+            for to_language in to_languages:
+                _answer_chunk = self.translate(_json_dict_values_chunk, [to_language], source_language)
+                _result_chunk = parse_translate_answer(_answer_chunk, [to_language])
 
-            # merge into reuslt
-            for (language, text_list) in _result_chunk.items():
-                if translated_text_list.get(language):
-                    translated_text_list[language] = translated_text_list[language] + text_list
-                else:
-                    translated_text_list[language] = text_list
+                # merge into reuslt
+                for (language, text_list) in _result_chunk.items():
+                    if translated_text_list.get(language):
+                        translated_text_list[language] = translated_text_list[language] + text_list
+                    else:
+                        translated_text_list[language] = text_list
 
-            answer.append(_answer_chunk)
+                answer.append(_answer_chunk)
 
             result_json_dict = {}
             for language in to_languages:
                 translated_values = translated_text_list[language]
 
-                if len(_json_dict_keys) != len(translated_values):
+                if len(_json_dict_keys) > len(translated_values):
                     print(f"{language} did not translate completely! Miss {len(_json_dict_keys) - len(translated_values)} entries!")
                     # raise Exception(f"{language} did not translate completely! Miss {len(_json_dict_keys) - len(translated_values)} entries!")
 
