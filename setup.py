@@ -25,10 +25,9 @@ setup(
     ],
     python_requires='>=3.5',
     entry_points={
-        'console_scriptes': [
-            'translation_god = translation_god.main:main',
-            'tg = translation_god.main:main'
+        'console_scripts': [
+            'translation_god=translation_god.main:main',
+            'tg=translation_god.main:main'
         ]
-    },
-    scripts=['bin/translation_god']
+    }
 )

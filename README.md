@@ -4,6 +4,16 @@ Super translation tool.
 TG(Translation God) supports translate json files in directory.
 TG supports translate excel file into multi language
 
+## Install
+
+因为包没有推送到仓库中，所以安装的第一步，需要下载源码tar包，并解压，
+进入包目录，会看到setup.py这个文件，安装TranslationGod执行如下命令：
+
+``` shell
+pip setup.py install
+```
+安装成功之后，在环境系统PATH中会存在 `tg`。
+
 
 ## Usage
 
@@ -14,9 +24,8 @@ export OPENAI_API_KEY="sk-xxxxxxx"
 ```
 
 ### Translate json files in directory
-``` shell
 
-# translate json directory or json fle
+``` shell
 tg --file=json --sourcelang="Chinese"  --targetlangs="English,Japanese,French" --input="./jsondirectory_or_file" --output="./output"
 # or
 tg -f json -s Chinese -t "English,Japanese,French" -i "./jsondirectory" -o "./output"

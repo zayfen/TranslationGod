@@ -341,4 +341,4 @@ def main():
     elif opt.file_type == 'excel':
         convert_excel_to_json_files(opt)
     else:
-        raise Exception("Please pass correct arguments! If you dont know how, please check 'tg -h' for help")
+        raise Exception("Please pass correct arguments! If you don't know how, please check 'tg -h' for help")
