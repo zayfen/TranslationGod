@@ -1,7 +1,7 @@
 # Translation God
 
 Translation God是一个基于ChatGPT的翻译工具。
-可以将一个目录下的所有json文件翻译成指定的语言，并按照原始的文件目录结构生成翻译后的目录结构，也可以是javascrit文件，只是必须保证js文件的内容格式如下：
+可以将一个目录下的所有json文件翻译成指定的语言，并按照原始的文件目录结构生成翻译结果。也可以是单个的javascrit文件，只是必须保证js文件的内容格式如下：
 
 ``` javascript
 export default {
@@ -11,7 +11,7 @@ export default {
 ```
 
 如果你想用人工翻译，可以将目录下的json文件借助TranslationGod生成一个Excel文件。
-Excel文件经过人工翻译完成之后，可以借助TranslationGod将Excle文件翻译写入到各个对应语言的目录中，依然是和源语言的目录保持一致。
+Excel文件经过人工翻译完成之后，可以再次借助TranslationGod将Excle文件翻译写入到各个对应语言的目录中，依然是和源语言的目录结构保持一致。
 
 ## Install
 因为包没有推送到仓库中，所以安装的第一步，需要下载源码tar包，并解压，
