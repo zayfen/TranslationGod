@@ -15,6 +15,7 @@ from chatgpt_service import ChatGPTTranslator
 from options_parser import Options, parse_option
 
 
+
 # Context
 SOURCE_LOCALE = 'Chinese'
 TARGET_LOCALES = []
@@ -326,14 +327,54 @@ def convert_excel_to_json_files(opt: Options):
     write_excel_to_javascript_file(input_file_path, input_map_file_path, output_path)
 
 
+def generate_langs_diff(opt: Options):
+    """
+    Generate lang diff, output to directory
+    """
+    print(f"generate_langs_diff with options: {opt}")
+    input_path = get_abspath_from_relative(opt.input)
+    input_path_existed = os.path.exists(input_path)
+    if not input_path_existed:
+        raise Exception(f"{input_path} doesn't exist!")
+
+    output_path = get_abspath_from_relative(opt.output)
+    print(f"output_path: {output_path}")
+
+    input_is_dir = os.path.isdir(input_path)
+    json_file_path_list = []
+    if input_is_dir:
+        file_path_list = list_files_in_directory(input_path)
+        avaiable_file_extends = ['.json', '.ts', '.js']
+        json_file_path_list = list(filter(lambda _path: any([ _path.endswith(extend) for extend in avaiable_file_extends ]), file_path_list))
+    else:
+        json_file_path_list.append(input_path)
+
+    filepath_map_json_dict = {}
+    for filepath in json_file_path_list:
+        parse_json_object_in_javascript_file(filepath, filepath_map_json_dict)
+
+    print(f"filepath_map_json_dict: {filepath_map_json_dict}")
+
+    for lang in opt.target_langs:
+        print(f"to lang: {lang}")
+        pass
+
+
+
+
 def main():
     opt = parse_option()
 
     SOURCE_LOCALE = opt.source_lang
     TARGET_LOCALES = opt.target_langs
 
+    print(opt)
+
     if opt.file_type == 'json' and opt.output.endswith('.xlsx'):
         convert_json_directory_to_excel(opt)
+    elif opt.file_type == 'json' and opt.source_lang is None:
+        # generate diff locales
+        generate_langs_diff(opt)
     elif opt.file_type == 'json':
         translate_json_directory_or_file(opt)
     elif opt.file_type == 'excel' and opt.output.endswith('.xlsx'):
@@ -342,3 +383,7 @@ def main():
         convert_excel_to_json_files(opt)
     else:
         raise Exception("Please pass correct arguments! If you don't know how, please check 'tg -h' for help")
+
+
+if __name__ == "__main__":
+    main()

@@ -11,10 +11,6 @@ import time
 from openai import OpenAI
 from answer_parser import parse_translate_answer
 
-client = OpenAI(
-    # api_key="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",
-    # api_key="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",
-)
 
 def build_translate_prompt(source_text_list, source_language, to_languages):
     content = "\n".join([f'- "{text}"' for text in source_text_list])
@@ -51,6 +47,12 @@ class ChatGPTTranslator(Translator):
         @Param { frequcency } - Requests per minute
         """
         # max translate 100 text entries each time
+        self.client = OpenAI(
+            # api_key="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",
+            # api_key="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",
+        )
+
+
         self.MAX_ENTRIES = 100
         self._frequcency = frequcency
 
@@ -77,7 +79,7 @@ class ChatGPTTranslator(Translator):
 
         print(f"Translating from {source_language} to {to_languages}")
 
-        chat_completion = client.chat.completions.create(model=self.model,
+        chat_completion = self.client.chat.completions.create(model=self.model,
         temperature = 0.8,
         # max_tokens = 100,
         # top_p = 1,

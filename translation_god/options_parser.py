@@ -5,7 +5,7 @@ import argparse
 class Options:
     def __init__(self) -> None:
         self._file_type = None
-        self._source_lang = "Chinese"
+        self._source_lang = None
         self._target_langs = []
         self._input = None
         self._output = None
@@ -92,7 +92,6 @@ def parse_option() -> Options:
     parser.add_argument(
         '-s',
         '--sourcelang',
-        default="Chinese",
         dest="source_lang",
         help="source language to translate from")
 
