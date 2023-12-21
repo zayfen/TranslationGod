@@ -350,16 +350,20 @@ def generate_langs_diff(opt: Options):
         json_file_path_list.append(input_path)
 
     filepath_map_json_dict = {}
+
     for filepath in json_file_path_list:
         parse_json_object_in_javascript_file(filepath, filepath_map_json_dict)
 
     print(f"filepath_map_json_dict: {filepath_map_json_dict}")
 
+    input_path_len = len(input_path)
+    for (filepath, json_dict) in filepath_map_json_dict.items():
+        relative_path = filepath[input_path_len:]
+        print(relative_path)
+
     for lang in opt.target_langs:
         print(f"to lang: {lang}")
         pass
-
-
 
 
 def main():
