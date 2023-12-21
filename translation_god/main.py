@@ -331,14 +331,18 @@ def generate_langs_diff(opt: Options):
     """
     Generate lang diff, output to directory
     """
-    print(f"generate_langs_diff with options: {opt}")
-    input_path = get_abspath_from_relative(opt.input)
+    source_lang = opt.source_lang
+    input_dir_path = get_abspath_from_relative(opt.input)
+
+    source_relative_path = os.path.join(opt.input, source_lang)
+    input_path = get_abspath_from_relative(source_relative_path)
+    print(f"{input_path=}")
     input_path_existed = os.path.exists(input_path)
     if not input_path_existed:
         raise Exception(f"{input_path} doesn't exist!")
 
     output_path = get_abspath_from_relative(opt.output)
-    print(f"output_path: {output_path}")
+    print(f"{output_path=}")
 
     input_is_dir = os.path.isdir(input_path)
     json_file_path_list = []
@@ -354,16 +358,18 @@ def generate_langs_diff(opt: Options):
     for filepath in json_file_path_list:
         parse_json_object_in_javascript_file(filepath, filepath_map_json_dict)
 
-    print(f"filepath_map_json_dict: {filepath_map_json_dict}")
-
-    input_path_len = len(input_path)
+    input_dir_path_len = len(input_dir_path)
     for (filepath, json_dict) in filepath_map_json_dict.items():
-        relative_path = filepath[input_path_len:]
-        print(relative_path)
+        relative_path = filepath[input_dir_path_len:]
 
-    for lang in opt.target_langs:
-        print(f"to lang: {lang}")
-        pass
+        for lang in opt.target_langs:
+            target_relative_path = os.path.normpath(os.path.join(lang, f".{relative_path}"))
+            target_abs_path = os.path.join(output_path, target_relative_path)
+            print(f"target_abs_path: {target_abs_path}")
+            # TODO: read target_abs_path if existed,
+            # TODO: then compare its with source file json
+            # TODO: caculate diff entries, and write diff entries to target_abs_path
+            pass
 
 
 def main():
@@ -376,7 +382,7 @@ def main():
 
     if opt.file_type == 'json' and opt.output.endswith('.xlsx'):
         convert_json_directory_to_excel(opt)
-    elif opt.file_type == 'json' and opt.source_lang is None:
+    elif opt.file_type == 'json' and opt.diff:
         # generate diff locales
         generate_langs_diff(opt)
     elif opt.file_type == 'json':

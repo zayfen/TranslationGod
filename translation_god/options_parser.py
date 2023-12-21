@@ -11,7 +11,10 @@ class Options:
         self._output = None
         self._model = 'gpt-3.5-turbo'
         self._frequcency = 3
+        self._diff = False
 
+    def set_diff(self, diff):
+        self._diff = diff
 
     def set_file_type(self, file_type):
         self._file_type = file_type
@@ -40,6 +43,10 @@ class Options:
     def set_frequency(self, frequency):
         self._frequcency =frequency
 
+
+    @property
+    def diff(self):
+        return self._diff
 
     @property
     def file_type(self):
@@ -88,6 +95,14 @@ def parse_option() -> Options:
         choices=['json', 'excel'],
         dest="file_type",
         help="File type of input")
+
+    parser.add_argument(
+        '-d',
+        '--diff',
+        dest="diff",
+        action=argparse.BooleanOptionalAction,
+        help="Generate diff json entries"
+    )
 
     parser.add_argument(
         '-s',
@@ -152,6 +167,9 @@ def parse_option() -> Options:
     if args.frequency:
         _frequency = int(args.frequency)
         opt.set_frequency(_frequency)
+
+    if args.diff:
+        opt.set_diff(args.diff)
 
     return opt
 
