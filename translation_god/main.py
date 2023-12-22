@@ -10,14 +10,13 @@ import esprima
 from functools import reduce
 import pandas as pd
 
-from config import EXCEL_FILE_NAME, EXCEL_FILE_MAP_NAME
+from config import EXCEL_FILE_NAME
 from chatgpt_service import ChatGPTTranslator
 from options_parser import Options, parse_option
-
-
+from helpers import diff_dict
 
 # Context
-SOURCE_LOCALE = 'Chinese'
+SOURCE_LOCALE = None
 TARGET_LOCALES = []
 
 
@@ -44,9 +43,7 @@ def list_files_in_directory(directory):
     return collected_files
 
 
-def parse_json_object_in_javascript_file(
-        javascript_file_path,
-        filepath_map_json_dict):
+def parse_json_object_in_javascript_file(javascript_file_path, filepath_map_json_dict):
     """
     parse json object in javascript/typescript file,
     and retrive all key-value pairs
@@ -56,15 +53,13 @@ def parse_json_object_in_javascript_file(
         source_code = file.read()
         pure_json = javascript_file_path.endswith(".json")
         if pure_json:
-            source_code = 'export default ' + source_code
+            source_code = "export default " + source_code
 
         syntax_tree = esprima.parseModule(source_code)
         syntax_tree_dict = syntax_tree.toDict()
-        object_expr_path = ('body', 0, 'declaration')
+        object_expr_path = ("body", 0, "declaration")
         object_expr = reduce(
-            lambda tree, prop: tree[prop],
-            object_expr_path,
-            syntax_tree_dict
+            lambda tree, prop: tree[prop], object_expr_path, syntax_tree_dict
         )
 
         json_dict = parse_object_expression(object_expr)
@@ -78,14 +73,16 @@ def parse_object_expression(object_expr):
     parse object expression of javascript
     """
     kv_collection = {}
-    properties = object_expr['properties']
+    properties = object_expr["properties"]
     for item in properties:
-        key_node = item['key']
-        value_node = item['value']
+        key_node = item["key"]
+        value_node = item["value"]
 
         # key_node['type'] is Literal or Identifier, for Literal use 'value' else use 'name'
-        item_key = key_node['value'] if key_node['type'] == 'Literal' else key_node['name']
-        item_value = value_node['value']
+        item_key = (
+            key_node["value"] if key_node["type"] == "Literal" else key_node["name"]
+        )
+        item_value = value_node["value"]
         kv_collection[item_key] = item_value
 
     return kv_collection
@@ -102,17 +99,19 @@ def write_json_dict_to_excel(path_map_json_dict, output_filepath=EXCEL_FILE_NAME
     # basename maybe "" xxx, yyy.xlsx
     basename = os.path.basename(output_filepath)
 
-    output_filepath = os.path.join(dir_path, EXCEL_FILE_NAME if basename == '' else basename)
-    excel_writer = pd.ExcelWriter(output_filepath, engine='xlsxwriter')
+    output_filepath = os.path.join(
+        dir_path, EXCEL_FILE_NAME if basename == "" else basename
+    )
+    excel_writer = pd.ExcelWriter(output_filepath, engine="xlsxwriter")
 
-    extend = 'xlsx'
+    extend = "xlsx"
     output_filename_without_extend = output_filepath
-    if output_filepath.endswith('.'+extend):
-        output_filename_without_extend = output_filepath[0:(0 - len("."+extend))]
+    if output_filepath.endswith("." + extend):
+        output_filename_without_extend = output_filepath[0 : (0 - len("." + extend))]
 
-    output_map_filename = ".".join([output_filename_without_extend, 'map', extend])
+    output_map_filename = ".".join([output_filename_without_extend, "map", extend])
 
-    excel_map_writer = pd.ExcelWriter(output_map_filename, engine='xlsxwriter')
+    excel_map_writer = pd.ExcelWriter(output_map_filename, engine="xlsxwriter")
 
     for path, json_dict in path_map_json_dict.items():
         # take one sheet every path
@@ -175,7 +174,7 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
             json_keys_dict = map_dataframe_dict[SOURCE_LOCALE]
             json_keys = json_keys_dict.values()
 
-            for (key, series_dict) in dataframe_dict.items():
+            for key, series_dict in dataframe_dict.items():
                 # key is column name, here it's language
                 # series_dict is text list translated
                 print("Language: ", key)
@@ -191,7 +190,7 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
                     sheet_name,
                     json_keys,
                     series_dict.values(),
-                    pure_json
+                    pure_json,
                 )
 
     except IOError as err:
@@ -201,7 +200,9 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
         excel_map_reader.close()
 
 
-def write_json_kv_list_to_javascript_file(out_dir, filename, key_list, value_list, pure_json=True):
+def write_json_kv_list_to_javascript_file(
+    out_dir, filename, key_list, value_list, pure_json=True
+):
     """
     write json [key, value] to out_dir/filename
     """
@@ -216,24 +217,30 @@ def write_json_kv_list_to_javascript_file(out_dir, filename, key_list, value_lis
     write_json_to_javascript_file(out_dir, filename, json_dict, pure_json)
 
 
-def write_json_to_javascript_file(out_dir, filename, json_dict, pure_json=True):
+def _write_json_to_javascript_file(file_path, json_dict, pure_json=True):
     """
-    Write json_dict to file
+    Write json_dict to file_path
     """
-    file_path = os.path.abspath(os.path.join(out_dir, filename))
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
+    dir_path = os.path.dirname(file_path)
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
     print(f"Writing {file_path} ...")
 
     with open(file_path, "w+", encoding="utf-8") as file:
         json_str = json.dumps(json_dict, indent=2, ensure_ascii=False)
-        final_code = json_str if pure_json else f'export default {json_str}'
+        final_code = json_str if pure_json else f"export default {json_str}"
         file.write(final_code)
 
-
+def write_json_to_javascript_file(out_dir, filename, json_dict, pure_json=True):
+    """
+    Write json_dict to file
+    """
+    file_path = os.path.abspath(os.path.join(out_dir, filename))
+    _write_json_to_javascript_file(file_path, json_dict, pure_json)
 
 # Commands
+
 
 def translate_json_directory_or_file(opt: Options):
     """
@@ -249,8 +256,15 @@ def translate_json_directory_or_file(opt: Options):
     json_file_path_list = []
     if input_is_dir:
         file_path_list = list_files_in_directory(input_path)
-        avaiable_file_extends = ['.json', '.ts', '.js']
-        json_file_path_list = list(filter(lambda _path: any([ _path.endswith(extend) for extend in avaiable_file_extends ]), file_path_list))
+        avaiable_file_extends = [".json", ".ts", ".js"]
+        json_file_path_list = list(
+            filter(
+                lambda _path: any(
+                    [_path.endswith(extend) for extend in avaiable_file_extends]
+                ),
+                file_path_list,
+            )
+        )
     else:
         json_file_path_list.append(input_path)
 
@@ -265,15 +279,20 @@ def translate_json_directory_or_file(opt: Options):
     items = filepath_map_json_dict.items()
     t = ChatGPTTranslator(opt.model, opt.frequency)
 
-    for (filepath, json_dict) in items:
+    for filepath, json_dict in items:
         filename = get_filename_from_filepath(filepath)
-        purse_josn = filename.endswith('.json')
+        purse_josn = filename.endswith(".json")
 
         t.reset()
         translated_result = t.translate_json_dict(json_dict, target_langs)
 
-        for (language, translated_json_dict) in translated_result.items():
-            write_json_to_javascript_file(f"{abs_output_path}/{language}/", filename, translated_json_dict, purse_josn)
+        for language, translated_json_dict in translated_result.items():
+            write_json_to_javascript_file(
+                f"{abs_output_path}/{language}/",
+                filename,
+                translated_json_dict,
+                purse_josn,
+            )
 
 
 def translate_excel_file(opt: Options):
@@ -281,6 +300,7 @@ def translate_excel_file(opt: Options):
     Translate excel file
     """
     raise NotImplementedError("Don't support translating excel file yet!")
+
 
 def convert_json_directory_to_excel(opt: Options):
     """
@@ -295,7 +315,9 @@ def convert_json_directory_to_excel(opt: Options):
     input_is_dir = os.path.isdir(input_path)
 
     filepath_map_json_dict = {}
-    filepath_list = list_files_in_directory(input_path) if input_is_dir else [input_path]
+    filepath_list = (
+        list_files_in_directory(input_path) if input_is_dir else [input_path]
+    )
 
     for filepath in filepath_list:
         parse_json_object_in_javascript_file(filepath, filepath_map_json_dict)
@@ -315,12 +337,12 @@ def convert_excel_to_json_files(opt: Options):
     if not input_path_existed:
         raise Exception(f"{input_file_path} doesn't exist!")
 
-    extend = 'xlsx'
+    extend = "xlsx"
     input_file_path_without_extend = input_file_path
-    if input_file_path.endswith('.'+extend):
-        input_file_path_without_extend = input_file_path[0:(0 - len("."+extend))]
+    if input_file_path.endswith("." + extend):
+        input_file_path_without_extend = input_file_path[0 : (0 - len("." + extend))]
 
-    input_map_file_path = ".".join([input_file_path_without_extend, 'map', extend])
+    input_map_file_path = ".".join([input_file_path_without_extend, "map", extend])
     if not os.path.exists(input_map_file_path):
         raise Exception(f"{input_map_file_path} doesn't exist!")
     output_path = get_abspath_from_relative(opt.output)
@@ -332,67 +354,87 @@ def generate_langs_diff(opt: Options):
     Generate lang diff, output to directory
     """
     source_lang = opt.source_lang
-    input_dir_path = get_abspath_from_relative(opt.input)
-
     source_relative_path = os.path.join(opt.input, source_lang)
-    input_path = get_abspath_from_relative(source_relative_path)
-    print(f"{input_path=}")
-    input_path_existed = os.path.exists(input_path)
+    source_input_dir_path = get_abspath_from_relative(source_relative_path)
+    print(f"{source_input_dir_path=}")
+    input_path_existed = os.path.exists(source_input_dir_path)
     if not input_path_existed:
-        raise Exception(f"{input_path} doesn't exist!")
+        raise Exception(f"{source_input_dir_path} doesn't exist!")
 
-    output_path = get_abspath_from_relative(opt.output)
-    print(f"{output_path=}")
+    output_dir_path = get_abspath_from_relative(opt.output)
+    print(f"{output_dir_path=}")
 
-    input_is_dir = os.path.isdir(input_path)
+    input_is_dir = os.path.isdir(source_input_dir_path)
     json_file_path_list = []
     if input_is_dir:
-        file_path_list = list_files_in_directory(input_path)
-        avaiable_file_extends = ['.json', '.ts', '.js']
-        json_file_path_list = list(filter(lambda _path: any([ _path.endswith(extend) for extend in avaiable_file_extends ]), file_path_list))
+        file_path_list = list_files_in_directory(source_input_dir_path)
+        avaiable_file_extends = [".json", ".ts", ".js"]
+        json_file_path_list = list(
+            filter(
+                lambda _path: any(
+                    [_path.endswith(extend) for extend in avaiable_file_extends]
+                ),
+                file_path_list,
+            )
+        )
     else:
-        json_file_path_list.append(input_path)
+        json_file_path_list.append(source_input_dir_path)
 
     filepath_map_json_dict = {}
 
     for filepath in json_file_path_list:
         parse_json_object_in_javascript_file(filepath, filepath_map_json_dict)
 
-    input_dir_path_len = len(input_dir_path)
-    for (filepath, json_dict) in filepath_map_json_dict.items():
-        relative_path = filepath[input_dir_path_len:]
+    input_path_len = len(source_input_dir_path)
+    for filepath, json_dict in filepath_map_json_dict.items():
+        relative_path = filepath[input_path_len:]
 
         for lang in opt.target_langs:
-            target_relative_path = os.path.normpath(os.path.join(lang, f".{relative_path}"))
-            target_abs_path = os.path.join(output_path, target_relative_path)
-            print(f"target_abs_path: {target_abs_path}")
-            # TODO: read target_abs_path if existed,
-            # TODO: then compare its with source file json
-            # TODO: caculate diff entries, and write diff entries to target_abs_path
-            pass
+            target_relative_path = os.path.normpath(
+                os.path.join(lang, f".{relative_path}")
+            )
+            target_input_file_path = os.path.join(opt.input, target_relative_path)
+            target_filepath_map_json_dict = {}
+            if os.path.exists(target_input_file_path):
+                parse_json_object_in_javascript_file(target_input_file_path, target_filepath_map_json_dict)
+
+            target_json_dict = target_filepath_map_json_dict.get(target_input_file_path) or {}
+            diff_json_dict = diff_dict(json_dict, target_json_dict)
+
+            print(f"{target_input_file_path=}")
+            target_output_file_path = os.path.join(output_dir_path, target_relative_path)
+            print(f"{target_output_file_path=}")
+
+            pure_json = filepath.endswith(".json")
+            _write_json_to_javascript_file(target_output_file_path, diff_json_dict, pure_json)
 
 
 def main():
     opt = parse_option()
+
+    global SOURCE_LOCALE
+    global TARGET_LOCALES
 
     SOURCE_LOCALE = opt.source_lang
     TARGET_LOCALES = opt.target_langs
 
     print(opt)
 
-    if opt.file_type == 'json' and opt.output.endswith('.xlsx'):
+    if opt.file_type == "json" and opt.output.endswith(".xlsx"):
         convert_json_directory_to_excel(opt)
-    elif opt.file_type == 'json' and opt.diff:
+    elif opt.file_type == "json" and opt.diff:
         # generate diff locales
         generate_langs_diff(opt)
-    elif opt.file_type == 'json':
+    elif opt.file_type == "json":
         translate_json_directory_or_file(opt)
-    elif opt.file_type == 'excel' and opt.output.endswith('.xlsx'):
+    elif opt.file_type == "excel" and opt.output.endswith(".xlsx"):
         translate_excel_file(opt)
-    elif opt.file_type == 'excel':
+    elif opt.file_type == "excel":
         convert_excel_to_json_files(opt)
     else:
-        raise Exception("Please pass correct arguments! If you don't know how, please check 'tg -h' for help")
+        raise Exception(
+            "Please pass correct arguments! If you don't know how, please check 'tg -h' for help"
+        )
 
 
 if __name__ == "__main__":
