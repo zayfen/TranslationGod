@@ -72,12 +72,13 @@ tg --file excel --input "./result.xlsx" --output "outputdir/"
 tg -f excel -i "./result.xlsx" -o "outputdir/"
 ```
 
-## 计算缺失的翻译词条，并将结果输出到指定目录下
+## Generate missing translation entries and output the results to the specified directory
+
 
 ``` bash
-tg --file json --input <source_lang_dir_or_file> --targetlangs="English,Japanese,French" --output <output_langs_dir>
+tg --diff --file json --input <lang_dir_or_file> --source <source_lang> --targetlangs="English,Japanese,French" --output <output_langs_dir>
 
 # or
 
-tg -f json -i <source_lang_dir_or_file> -t "English,Japanese,French" -o <output_langs_dir>
+tg -d -f json -i <lang_dir_or_file> -s <source_lang> -t "English,Japanese,French" -o <output_langs_dir>
 ```
