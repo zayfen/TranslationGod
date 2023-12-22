@@ -72,7 +72,7 @@ tg --file excel --input "./result.xlsx" --output "outputdir/"
 tg -f excel -i "./result.xlsx" -o "outputdir/"
 ```
 
-## Generate missing translation entries and output the results to the specified directory
+### Generate missing translation entries and output the results to the specified directory
 
 
 ``` bash
