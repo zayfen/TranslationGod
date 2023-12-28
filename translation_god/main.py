@@ -12,7 +12,7 @@ import pandas as pd
 
 from config import EXCEL_FILE_NAME
 from chatgpt_service import ChatGPTTranslator
-from options_parser import Options, parse_option
+from options_parser import Command, Options, parse_option
 from helpers import diff_dict
 
 # Context
@@ -420,16 +420,19 @@ def main():
 
     print(opt)
 
-    if opt.file_type == "json" and opt.output.endswith(".xlsx"):
+    if opt.command == Command.CONVERT_JSON_TO_EXCEL:
         convert_json_directory_to_excel(opt)
-    elif opt.file_type == "json" and opt.diff:
+    elif opt.command == Command.GENERATE_LANGS_DIFF:
         # generate diff locales
         generate_langs_diff(opt)
-    elif opt.file_type == "json":
+    elif opt.command == Command.INJECT_JSON:
+        # TODO: inject to  input json files to output
+        pass
+    elif opt.command == Command.TRANSLATE_JSON_FILES:
         translate_json_directory_or_file(opt)
-    elif opt.file_type == "excel" and opt.output.endswith(".xlsx"):
+    elif opt.command == Command.TRANSLATE_EXCEL_FILE:
         translate_excel_file(opt)
-    elif opt.file_type == "excel":
+    elif opt.command == Command.CONVERT_EXCEL_TO_JSON:
         convert_excel_to_json_files(opt)
     else:
         raise Exception(

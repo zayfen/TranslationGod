@@ -1,23 +1,61 @@
 #coding: utf-8
 
+"""
+translation god params:
+--command, -c; values:
+* cje: convert json to excel
+* gld: generate langs diff from json files
+* ij: inject json
+* tj: translate json files
+* te: translate excel files
+* cej: convert excel to json
+
+"""
+
 import argparse
+from enum import Enum
+
+__all__ = ["Command", "Options"]
+
+class Command(Enum):
+    def __str__(self) -> str:
+        return self.value
+    
+    CONVERT_JSON_TO_EXCEL = 'cje'
+    GENERATE_LANGS_DIFF = 'gld'
+    INJECT_JSON = 'ji'
+    TRANSLATE_JSON_FILES = 'tj'
+    TRANSLATE_EXCEL_FILE = 'te'
+    CONVERT_EXCEL_TO_JSON = 'cej'
+
+    @classmethod
+    def load(cls, value: str):
+        if value == cls.CONVERT_EXCEL_TO_JSON.value:
+            return cls.CONVERT_EXCEL_TO_JSON
+
+        for name, member in cls.__members__.items():
+            if member.value == value:
+                return member
+
+        return None
+
+
 
 class Options:
     def __init__(self) -> None:
-        self._file_type = None
+        self._command = None
         self._source_lang = None
         self._target_langs = []
         self._input = None
         self._output = None
         self._model = 'gpt-3.5-turbo'
         self._frequcency = 3
-        self._diff = False
+
+    def set_command(self, command: Command):
+        self._command = command
 
     def set_diff(self, diff):
         self._diff = diff
-
-    def set_file_type(self, file_type):
-        self._file_type = file_type
 
 
     def set_source_lang(self, source_lang):
@@ -45,12 +83,8 @@ class Options:
 
 
     @property
-    def diff(self):
-        return self._diff
-
-    @property
-    def file_type(self):
-        return self._file_type
+    def command(self):
+        return self._command
 
     @property
     def source_lang(self):
@@ -88,21 +122,13 @@ def parse_option() -> Options:
         prog='TranslationGod(tg)',
         description="Super translation tool.",
         epilog="tg is a super translation tool.")
-
+    Command.__members__.values()
     parser.add_argument(
-        '-f',
-        '--file',
-        choices=['json', 'excel'],
-        dest="file_type",
-        help="File type of input")
-
-    parser.add_argument(
-        '-d',
-        '--diff',
-        dest="diff",
-        action=argparse.BooleanOptionalAction,
-        help="Generate diff json entries"
-    )
+        '-c',
+        '--command',
+        choices=[member.value for member in Command.__members__.values()],
+        dest="command",
+        help="Command")
 
     parser.add_argument(
         '-s',
@@ -144,8 +170,8 @@ def parse_option() -> Options:
     args = parser.parse_args()
     opt = Options()
 
-    if args.file_type:
-        opt.set_file_type(args.file_type)
+    if args.command:
+        opt.set_command(Command.load(args.command))
 
     if args.source_lang:
         opt.set_source_lang(args.source_lang)
@@ -167,9 +193,6 @@ def parse_option() -> Options:
     if args.frequency:
         _frequency = int(args.frequency)
         opt.set_frequency(_frequency)
-
-    if args.diff:
-        opt.set_diff(args.diff)
 
     return opt
 

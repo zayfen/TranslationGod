@@ -33,30 +33,30 @@ export OPENAI_API_KEY="sk-xxxxxxx"
 ### 翻译目录下的JSON文件或者翻译单个JSON文件
 
 ``` bash
-tg --file=json --sourcelang="Chinese"  --targetlangs="English,Japanese,French" --input="./jsondirectory_or_file" --output="./output"
+tg --command=tj --sourcelang="Chinese"  --targetlangs="English,Japanese,French" --input="./jsondirectory_or_file" --output="./output"
 # or
-tg -f json -s Chinese -t "English,Japanese,French" -i "./jsondirectory" -o "./output"
+tg -c tj -s Chinese -t "English,Japanese,French" -i "./jsondirectory" -o "./output"
 ```
 
 ### 翻译Excel文件
 
 ``` bash
-tg --file=excel --sourcelang="Chinese" --input="./my_excel.xlsx" --output="./my_translated_excel.xlsx"
+tg --command=te --sourcelang="Chinese" --input="./my_excel.xlsx" --output="./my_translated_excel.xlsx"
 
 # Or
 
-tg -f excel -s Chinese -i "./my_excel.xlsx" -o "./my_translated_excel.xlsx"
+tg -c te -s Chinese -i "./my_excel.xlsx" -o "./my_translated_excel.xlsx"
 ```
 
 ### 将目录下的JSON文件转换成Excel文件
 
 ``` bash
 # this command will produce 2 files, one is output option specified, such as "result.xlsx", the other one is "result.map.xlsx"
-tg --file=json --sourcelang="Chinese" --targetlangs="English,Japanese,French" --input="./json_file" --output="./must_end_with_xlsx.xlsx"
+tg --command=cje --sourcelang="Chinese" --targetlangs="English,Japanese,French" --input="./json_file" --output="./must_end_with_xlsx.xlsx"
 
 # Or
 
-tg -f json -s "Chinese" -t "English,Japanese,French" -i "./json_file" -o "must_end_with_xlsx.xlsx"
+tg -c cje -s "Chinese" -t "English,Japanese,French" -i "./json_file" -o "must_end_with_xlsx.xlsx"
 ```
 
 ### 将Excel的文件转换成对应翻译语言的目录和JSON文件
@@ -65,20 +65,20 @@ tg -f json -s "Chinese" -t "English,Japanese,French" -i "./json_file" -o "must_e
 
 ``` bash
 # this command will convert result.xlsx and result.map.xlsx to json files
-tg --file excel --input "./result.xlsx" --output "outputdir/"
+tg --command cej --input "./result.xlsx" --output "outputdir/"
 
 # Or
 
-tg -f excel -i "./result.xlsx" -o "outputdir/"
+tg -c cej -i "./result.xlsx" -o "outputdir/"
 ```
 
 ### Generate missing translation entries and output the results to the specified directory
 
 
 ``` bash
-tg --diff --file json --input <lang_dir_or_file> --source <source_lang> --targetlangs="English,Japanese,French" --output <output_langs_dir>
+tg --command gld --input <lang_dir_or_file> --source <source_lang> --targetlangs="English,Japanese,French" --output <output_langs_dir>
 
 # or
 
-tg -d -f json -i <lang_dir_or_file> -s <source_lang> -t "English,Japanese,French" -o <output_langs_dir>
+tg -c gld -i <lang_dir_or_file> -s <source_lang> -t "English,Japanese,French" -o <output_langs_dir>
 ```
