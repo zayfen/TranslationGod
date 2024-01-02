@@ -13,7 +13,7 @@ import pandas as pd
 from config import EXCEL_FILE_NAME
 from chatgpt_service import ChatGPTTranslator
 from options_parser import Command, Options, parse_option
-from helpers import diff_dict
+from helpers import diff_dict, merge_json_dict
 
 # Context
 SOURCE_LOCALE = None
@@ -409,6 +409,48 @@ def generate_langs_diff(opt: Options):
             _write_json_to_javascript_file(target_output_file_path, diff_json_dict, pure_json)
 
 
+def merge_json(opt):
+    """
+    Merge source json file to target json
+    """
+    input_dir_path = get_abspath_from_relative(opt.input)
+    input_dir_path_existed = os.path.exists(input_dir_path)
+    if not input_dir_path_existed:
+        raise Exception(f"{input_dir_path} doesn't exist!")
+    
+    assert os.path.isdir(input_dir_path)
+    
+    output_dir_path = get_abspath_from_relative(opt.output)
+    print(f"{output_dir_path=}")
+    output_dir_path_existed = os.path.exists(output_dir_path)
+    if not output_dir_path_existed:
+        raise Exception(f"{output_dir_path} doesn't exist")
+
+    assert os.path.isdir(output_dir_path)
+
+    # for each file in input dir, merge it to file mathed input file in output directory.
+    file_path_list = list_files_in_directory(input_dir_path)
+    input_dir_path_len = len(input_dir_path)
+    for input_file_path in file_path_list:
+        relative_input_path = input_file_path[input_dir_path_len+1:]
+        output_file_path = os.path.join(output_dir_path, relative_input_path)
+
+        if not os.path.exists(output_file_path):
+            continue
+        
+        json_dict = {}
+        parse_json_object_in_javascript_file(input_file_path, json_dict)
+        parse_json_object_in_javascript_file(output_file_path, json_dict)
+
+        output_json_dict = json_dict.get(output_file_path)
+        input_json_dict = json_dict.get(input_file_path)
+
+        final_output_json_dict = merge_json_dict(output_json_dict, input_json_dict)
+        pure_json = output_file_path.endswith(".json")
+        _write_json_to_javascript_file(output_file_path, final_output_json_dict, pure_json)
+        
+    
+
 def main():
     opt = parse_option()
 
@@ -425,9 +467,8 @@ def main():
     elif opt.command == Command.GENERATE_LANGS_DIFF:
         # generate diff locales
         generate_langs_diff(opt)
-    elif opt.command == Command.INJECT_JSON:
-        # TODO: inject to  input json files to output
-        pass
+    elif opt.command == Command.MERGE_JSON:
+        merge_json(opt)
     elif opt.command == Command.TRANSLATE_JSON_FILES:
         translate_json_directory_or_file(opt)
     elif opt.command == Command.TRANSLATE_EXCEL_FILE:

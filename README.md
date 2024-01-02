@@ -82,3 +82,15 @@ tg --command gld --input <lang_dir_or_file> --source <source_lang> --targetlangs
 
 tg -c gld -i <lang_dir_or_file> -s <source_lang> -t "English,Japanese,French" -o <output_langs_dir>
 ```
+
+
+## Merge json files in <input_path> to <target_path>
+
+``` bash
+tg --command mj --input <input_dir> --output <output_dir>
+
+# or
+
+tg -c mj -i <input_dir> -o <output_dir>
+```
+

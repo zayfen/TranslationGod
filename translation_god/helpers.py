@@ -17,3 +17,13 @@ def diff_dict(source_dict, target_dict):
             output_dict[k] = v
 
     return output_dict
+
+
+def merge_json_dict(a_json_dict, b_json_dict):
+    """
+    Merge b_json_dict to a_json_dict, and output result
+    result = { ...a_json_dict, ...b_json_dict }
+    """
+    c_json_dict = { **a_json_dict, **b_json_dict }
+
+    return c_json_dict

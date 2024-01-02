@@ -5,7 +5,7 @@ translation god params:
 --command, -c; values:
 * cje: convert json to excel
 * gld: generate langs diff from json files
-* ij: inject json
+* mj: merge json
 * tj: translate json files
 * te: translate excel files
 * cej: convert excel to json
@@ -23,7 +23,7 @@ class Command(Enum):
     
     CONVERT_JSON_TO_EXCEL = 'cje'
     GENERATE_LANGS_DIFF = 'gld'
-    INJECT_JSON = 'ji'
+    MERGE_JSON = 'mj'
     TRANSLATE_JSON_FILES = 'tj'
     TRANSLATE_EXCEL_FILE = 'te'
     CONVERT_EXCEL_TO_JSON = 'cej'
