@@ -13,7 +13,9 @@ import pandas as pd
 from config import EXCEL_FILE_NAME
 from chatgpt_service import ChatGPTTranslator
 from options_parser import Command, Options, parse_option
-from helpers import diff_dict, merge_json_dict
+from helpers import copy_file, diff_dict, merge_json_dict
+
+
 
 # Context
 SOURCE_LOCALE = None
@@ -436,6 +438,9 @@ def merge_json(opt):
         output_file_path = os.path.join(output_dir_path, relative_input_path)
 
         if not os.path.exists(output_file_path):
+            # copy input_file_path to output_file_path
+            print(f"Copy {input_file_path} to {output_file_path}")
+            copy_file(input_file_path, output_file_path)
             continue
         
         json_dict = {}

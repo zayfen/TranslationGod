@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import os
+
 """
 Helper functions for translation god
 """
@@ -27,3 +29,16 @@ def merge_json_dict(a_json_dict, b_json_dict):
     c_json_dict = { **a_json_dict, **b_json_dict }
 
     return c_json_dict
+
+
+def copy_file(input_file_path, target_file_path):
+    """
+    Copy data from input_file_path to target_file_path, if target_file_path
+    doesn't exist, then create it.
+    """
+    with open(input_file_path) as f:
+        data = f.read()
+
+        with open(target_file_path, "w+") as wf:
+            wf.write(data)
+    
