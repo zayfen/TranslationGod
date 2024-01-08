@@ -84,7 +84,7 @@ def parse_object_expression(object_expr):
         item_key = (
             key_node["value"] if key_node["type"] == "Literal" else key_node["name"]
         )
-        item_value = value_node["value"]
+        item_value = (value_node["value"] if value_node["type"] == "Literal" else value_node["name"])
         kv_collection[item_key] = item_value
 
     return kv_collection
