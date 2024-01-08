@@ -408,7 +408,10 @@ def generate_langs_diff(opt: Options):
             print(f"{target_output_file_path=}")
 
             pure_json = filepath.endswith(".json")
-            _write_json_to_javascript_file(target_output_file_path, diff_json_dict, pure_json)
+
+            # 对于diff_json_dict不为空，才写入文件
+            if bool(diff_json_dict) == True:
+                _write_json_to_javascript_file(target_output_file_path, diff_json_dict, pure_json)
 
 
 def merge_json(opt):
