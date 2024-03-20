@@ -154,13 +154,17 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
     write excel to json(javascript) back
     output json file name named as excel sheet name
     """
+    key_from_first_column = False
     # excel_map_file_path必须存在，如果不存在此文件，则表示没有对应的json文件，直接忽略
     if not os.path.exists(excel_map_file_path):
-        raise Exception(f"{excel_map_file_path} don't exist!")
-
+        # raise Exception(f"{excel_map_file_path} don't exist!")
+        # 当没有找到map file时，需要将第一列作为key
+        key_from_first_column = True
+     
     try:
         excel_reader = pd.ExcelFile(excel_file_path)
-        excel_map_reader = pd.ExcelFile(excel_map_file_path)
+        excel_map_reader = pd.ExcelFile(excel_map_file_path) if not key_from_first_column else None
+
         print(excel_reader.sheet_names)
         sheet_names = excel_reader.sheet_names
 
@@ -169,27 +173,33 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
             dataframe_dict = dataframe.to_dict()
 
             # get json key
-            map_dataframe = excel_map_reader.parse(sheet_name=sheet_name)
-            map_dataframe_dict = map_dataframe.to_dict()
+            json_keys_dict = {}
 
-            # json_keys_dict lick {0: 'key1', 1: 'key2',... }
-            json_keys_dict = map_dataframe_dict[SOURCE_LOCALE]
+            if not key_from_first_column:
+                map_dataframe = excel_map_reader.parse(sheet_name=sheet_name)
+                map_dataframe_dict = map_dataframe.to_dict()
+
+                # json_keys_dict lick {0: 'key1', 1: 'key2',... }
+                json_keys_dict = map_dataframe_dict[SOURCE_LOCALE]
+            else:
+                # first column from dataframe should be key
+                dataframe_dict_items = list(dataframe_dict.items())
+                json_keys_dict = dataframe_dict_items[0][1]                
+
             json_keys = json_keys_dict.values()
 
-            for key, series_dict in dataframe_dict.items():
+            # 如果第一列是key, 需要忽略
+            _dataframe_dict = list(dataframe_dict.items())[1:] if key_from_first_column else list(dataframe_dict.items())
+            for key, series_dict in _dataframe_dict:
                 # key is column name, here it's language
                 # series_dict is text list translated
                 print("Language: ", key)
-
-                # ignore source locale
-                if key == SOURCE_LOCALE:
-                    continue
 
                 pure_json = sheet_name.endswith(".json")
 
                 write_json_kv_list_to_javascript_file(
                     os.path.join(output_dir, key),
-                    sheet_name,
+                    sheet_name + ".ts",
                     json_keys,
                     series_dict.values(),
                     pure_json,
@@ -199,7 +209,8 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
         print("Read excel error: ", err)
     else:
         excel_reader.close()
-        excel_map_reader.close()
+        if excel_map_reader:
+            excel_map_reader.close()
 
 
 def write_json_kv_list_to_javascript_file(
@@ -345,8 +356,6 @@ def convert_excel_to_json_files(opt: Options):
         input_file_path_without_extend = input_file_path[0 : (0 - len("." + extend))]
 
     input_map_file_path = ".".join([input_file_path_without_extend, "map", extend])
-    if not os.path.exists(input_map_file_path):
-        raise Exception(f"{input_map_file_path} doesn't exist!")
     output_path = get_abspath_from_relative(opt.output)
     write_excel_to_javascript_file(input_file_path, input_map_file_path, output_path)
 
