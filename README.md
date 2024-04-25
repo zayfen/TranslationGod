@@ -61,7 +61,7 @@ tg -c cje -s "Chinese" -t "English,Japanese,French" -i "./json_file" -o "must_en
 
 ### 将Excel的文件转换成对应翻译语言的目录和JSON文件
 
-注意：excel文件必须保持TranslationGod生成的格式。
+注意：excel文件必须保持TranslationGod生成的格式。 .map.xlsx文件存储的key，当没有.map.xlsx文件时，将xlsx的第一列作为key
 
 ``` bash
 # this command will convert result.xlsx and result.map.xlsx to json files
@@ -94,3 +94,13 @@ tg --command mj --input <input_dir> --output <output_dir>
 tg -c mj -i <input_dir> -o <output_dir>
 ```
 
+
+### Insert or Update translation entry
+
+``` bash
+tg --command=upsert --input <file> --key <key>   --value <value>
+
+# or
+
+tg -c upsert -i <file> -k <key> -v <value>
+```

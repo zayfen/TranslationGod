@@ -16,7 +16,6 @@ from options_parser import Command, Options, parse_option
 from helpers import copy_file, diff_dict, merge_json_dict
 
 
-
 # Context
 SOURCE_LOCALE = None
 TARGET_LOCALES = []
@@ -160,7 +159,7 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
         # raise Exception(f"{excel_map_file_path} don't exist!")
         # 当没有找到map file时，需要将第一列作为key
         key_from_first_column = True
-     
+
     try:
         excel_reader = pd.ExcelFile(excel_file_path)
         excel_map_reader = pd.ExcelFile(excel_map_file_path) if not key_from_first_column else None
@@ -184,7 +183,7 @@ def write_excel_to_javascript_file(excel_file_path, excel_map_file_path, output_
             else:
                 # first column from dataframe should be key
                 dataframe_dict_items = list(dataframe_dict.items())
-                json_keys_dict = dataframe_dict_items[0][1]                
+                json_keys_dict = dataframe_dict_items[0][1]
 
             json_keys = json_keys_dict.values()
 
@@ -431,9 +430,9 @@ def merge_json(opt):
     input_dir_path_existed = os.path.exists(input_dir_path)
     if not input_dir_path_existed:
         raise Exception(f"{input_dir_path} doesn't exist!")
-    
+
     assert os.path.isdir(input_dir_path)
-    
+
     output_dir_path = get_abspath_from_relative(opt.output)
     print(f"{output_dir_path=}")
     output_dir_path_existed = os.path.exists(output_dir_path)
@@ -454,7 +453,7 @@ def merge_json(opt):
             print(f"Copy {input_file_path} to {output_file_path}")
             copy_file(input_file_path, output_file_path)
             continue
-        
+
         json_dict = {}
         parse_json_object_in_javascript_file(input_file_path, json_dict)
         parse_json_object_in_javascript_file(output_file_path, json_dict)
@@ -465,8 +464,27 @@ def merge_json(opt):
         final_output_json_dict = merge_json_dict(output_json_dict, input_json_dict)
         pure_json = output_file_path.endswith(".json")
         _write_json_to_javascript_file(output_file_path, final_output_json_dict, pure_json)
-        
-    
+
+
+def upsert_translation_entry(opt):
+    """Update or insert a translation entry to specified file (opt.input)
+    """
+    input_file_path = get_abspath_from_relative(opt.input)
+    input_file_path_existed = os.path.exists(input_file_path)
+    if not input_file_path_existed:
+        raise Exception(f"{input_file_path} doesn't exist!")
+
+    assert os.path.isfile(input_file_path)
+
+    json_dict = {}
+    parse_json_object_in_javascript_file(input_file_path, json_dict)
+
+    output_json_dict = json_dict.get(input_file_path)
+
+    output_json_dict[opt.key] = opt.value
+
+    pure_json = input_file_path.endswith('.json')
+    _write_json_to_javascript_file(input_file_path, output_json_dict, pure_json)
 
 def main():
     opt = parse_option()
@@ -492,6 +510,11 @@ def main():
         translate_excel_file(opt)
     elif opt.command == Command.CONVERT_EXCEL_TO_JSON:
         convert_excel_to_json_files(opt)
+
+    elif opt.command == Command.UPSERT_ENTRY:
+        # upsert key-value entry to input file
+        upsert_translation_entry(opt)
+
     else:
         raise Exception(
             "Please pass correct arguments! If you don't know how, please check 'tg -h' for help"
