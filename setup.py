@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="translation_god",
-    version="1.0",
+    version="1.0.2",
     author="zayfen",
     author_email="zhangyunfeng0101@gmail.com",
     description="A translation tool based ChatGPT",
